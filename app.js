@@ -73,14 +73,11 @@ async function loadData() {
 }
 
 function renderAll() {
-  const visibleAssets = myRole === "admin"
-    ? assets
-    : assets.filter(a => a.assigned_to === myEmployeeId);
-
-  $("s-total").textContent = visibleAssets.length;
-  $("s-available").textContent = visibleAssets.filter(a => a.status === "available").length;
-  $("s-assigned").textContent = visibleAssets.filter(a => a.status === "assigned").length;
-  $("s-maintenance").textContent = visibleAssets.filter(a => a.status === "maintenance").length;
+  // بطاقات الإحصاءات تعرض إجمالي العهد في النظام لجميع المستخدمين.
+  $("s-total").textContent = assets.length;
+  $("s-available").textContent = assets.filter(a => a.status === "available").length;
+  $("s-assigned").textContent = assets.filter(a => a.status === "assigned").length;
+  $("s-maintenance").textContent = assets.filter(a => a.status === "maintenance").length;
   $("s-employees").textContent = employees.length;
   $("s-employees").parentElement.style.display = myRole === "admin" ? "" : "none";
   renderAssets();
