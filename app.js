@@ -4,7 +4,7 @@ const db = window.supabase.createClient(
   "sb_publishable_UDbvmhMTZ3hCXxvtIPRS4A_9V-RykBe"
 );
 
-let employees = [], assets = [], maintenance = [], pendingAssetId = null, myRole = "staff";
+let employees = [], assets = [], maintenance = [], pendingAssetId = null, myRole = "staff", myEmployeeId = null;
 const $ = (id) => document.getElementById(id);
 
 function toast(msg, isError = false) {
@@ -35,10 +35,12 @@ $("logout-btn").onclick = () => db.auth.signOut();
 
 db.auth.onAuthStateChange(async (_event, session) => {
   if (session) {
-    const { data } = await db.from("staff_roles").select("role").eq("email", session.user.email).single();
+    const { data } = await db.from("staff_roles").select("role, employee_id").eq("email", session.user.email).single();
     myRole = data?.role || "staff";
-    $("nav-employees").style.display = myRole === "admin" ? "" : "none";
-    $("asset-form").style.display = myRole === "admin" ? "" : "none";
+    myEmployeeId = data?.employee_id || null;
+    const isAdmin = myRole === "admin";
+    $("nav-employees").style.display = isAdmin ? "" : "none";
+    $("asset-form").style.display = isAdmin ? "" : "none";
     $("login-screen").classList.add("hidden");
     $("app-screen").classList.remove("hidden");
     loadData();
@@ -79,7 +81,44 @@ function renderAll() {
   renderAssets();
   renderEmployees();
   renderMaintenance();
+  renderMyAssets();
 }
+
+// الرئيسية: الموظف يرى عُهده فقط، والأدمن يرى كل العُهد.
+function renderMyAssets() {
+  const isAdmin = myRole === "admin";
+  const search = $("my-assets-search").value.trim().toLowerCase();
+  let list = isAdmin ? assets : assets.filter(a => a.assigned_to === myEmployeeId);
+
+  if (search) list = list.filter(a =>
+    `${a.device_name} ${a.assigned_employee?.full_name || ""}`.toLowerCase().includes(search)
+  );
+
+  $("my-assets-title").textContent = isAdmin ? "جميع العُهد" : "عُهدي الحالية";
+  $("my-assets-note").textContent = isAdmin ? "جميع الأجهزة المسجلة في النظام" : "الأجهزة المسندة إلى حسابك";
+  $("my-assets-employee-head").style.display = isAdmin ? "" : "none";
+
+  if (!isAdmin && !myEmployeeId) {
+    $("my-assets-body").innerHTML = `<tr><td colspan="3" class="text-center text-slate-400 py-6">لم يتم ربط حسابك بسجل موظف بعد</td></tr>`;
+    return;
+  }
+
+  const badge = {
+    available: "badge-available",
+    assigned: "badge-assigned",
+    maintenance: "badge-maintenance"
+  };
+  const label = { available: "متاحة", assigned: "مصروفة", maintenance: "قيد الصيانة" };
+
+  $("my-assets-body").innerHTML = list.map(a => `<tr>
+    ${isAdmin ? `<td class="py-2">${esc(a.assigned_employee?.full_name || "—")}</td>` : ""}
+    <td class="font-bold">${esc(a.device_name)}</td>
+    <td class="font-mono text-xs">${esc(a.serial_number)}</td>
+    <td><span class="badge ${badge[a.status]}">${label[a.status]}</span></td>
+  </tr>`).join("") || `<tr><td colspan="${isAdmin ? 4 : 3}" class="text-center text-slate-400 py-6">لا توجد عُهد مطابقة</td></tr>`;
+}
+
+$("my-assets-search").oninput = renderMyAssets;
 
 function renderAssets() {
   const statusMap = {
