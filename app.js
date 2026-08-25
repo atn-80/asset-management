@@ -73,15 +73,33 @@ async function loadData() {
 }
 
 function renderAll() {
-  $("s-total").textContent = assets.length;
-  $("s-available").textContent = assets.filter(a => a.status === "available").length;
-  $("s-assigned").textContent = assets.filter(a => a.status === "assigned").length;
-  $("s-maintenance").textContent = assets.filter(a => a.status === "maintenance").length;
+  const visibleAssets = myRole === "admin"
+    ? assets
+    : assets.filter(a => a.assigned_to === myEmployeeId);
+
+  $("s-total").textContent = visibleAssets.length;
+  $("s-available").textContent = visibleAssets.filter(a => a.status === "available").length;
+  $("s-assigned").textContent = visibleAssets.filter(a => a.status === "assigned").length;
+  $("s-maintenance").textContent = visibleAssets.filter(a => a.status === "maintenance").length;
   $("s-employees").textContent = employees.length;
+  $("s-employees").parentElement.style.display = myRole === "admin" ? "" : "none";
   renderAssets();
   renderEmployees();
   renderMaintenance();
   renderMyAssets();
+}
+
+function getVisibleAssets() {
+  return myRole === "admin"
+    ? assets
+    : assets.filter(a => a.assigned_to === myEmployeeId);
+}
+
+// إدارة العهد: الموظف يرى عهده الحالية مع الأجهزة المتاحة للصرف فقط.
+function getAssetsForManagement() {
+  return myRole === "admin"
+    ? assets
+    : assets.filter(a => a.assigned_to === myEmployeeId || a.status === "available");
 }
 
 // الرئيسية: الموظف يرى عُهده فقط، والأدمن يرى كل العُهد.
@@ -122,11 +140,11 @@ $("my-assets-search").oninput = renderMyAssets;
 
 function renderAssets() {
   const statusMap = {
-    available: [`<span class="badge badge-available">متاحة</span>`, (a) => myRole === "admin" ? `<button class="link-btn link-green" onclick="openAssign('${a.id}')">صرف</button>` : `<span class="text-xs text-slate-400">—</span>`],
+    available: [`<span class="badge badge-available">متاحة</span>`, (a) => myRole === "admin" ? `<button class="link-btn link-green" onclick="openAssign('${a.id}')">صرف</button>` : `<button class="link-btn link-green" onclick="selfAssign('${a.id}')">صرف لي</button>`],
     assigned: [`<span class="badge badge-assigned">مصروفة</span>`, (a) => myRole === "admin" ? `<button class="link-btn link-red" onclick="returnAsset('${a.id}')">استرجاع</button>` : `<span class="text-xs text-slate-400">—</span>`],
     maintenance: [`<span class="badge badge-maintenance">قيد الصيانة</span>`, () => `<span class="text-xs text-slate-400">بانتظار الإصلاح</span>`]
   };
-  $("assets-body").innerHTML = assets.map((a) => {
+  $("assets-body").innerHTML = getAssetsForManagement().map((a) => {
     const [badge, actionFn] = statusMap[a.status];
     return `<tr>
       <td class="py-2 font-bold">${esc(a.device_name)}</td>
@@ -150,7 +168,13 @@ function renderEmployees() {
 }
 
 function renderMaintenance() {
-  $("maint-body").innerHTML = maintenance.map((m) => {
+  const visibleAssets = getVisibleAssets();
+  const visibleIds = new Set(visibleAssets.map(a => a.id));
+  const visibleMaintenance = myRole === "admin"
+    ? maintenance
+    : maintenance.filter(m => visibleIds.has(m.asset_id));
+
+  $("maint-body").innerHTML = visibleMaintenance.map((m) => {
     const done = m.status === "completed";
     const badge = done ? `<span class="badge badge-available">تم الإصلاح</span>` : `<span class="badge badge-maintenance">قيد الصيانة</span>`;
     const action = done ? `<span class="text-xs text-slate-400">—</span>` : (myRole === "admin" ? `<button class="link-btn link-green" onclick="markFixed('${m.id}','${m.asset_id}')">تم الإصلاح</button>` : `<span class="text-xs text-slate-400">بانتظار الأدمن</span>`);
@@ -164,7 +188,7 @@ function renderMaintenance() {
     </tr>`;
   }).join("") || `<tr><td colspan="6" class="text-center text-slate-400 py-6">لا توجد طلبات إصلاح</td></tr>`;
 
-  $("m-asset").innerHTML = assets.filter(a => a.status !== "maintenance")
+  $("m-asset").innerHTML = visibleAssets.filter(a => a.status !== "maintenance")
     .map(a => `<option value="${a.id}">${esc(a.device_name)} — ${esc(a.serial_number)}</option>`)
     .join("") || `<option value="">لا توجد عُهد متاحة</option>`;
 }
@@ -210,6 +234,29 @@ window.openAssign = (id) => {
   $("modal-emp").innerHTML = employees.map(e => `<option value="${e.id}">${esc(e.full_name)}</option>`).join("");
   $("modal").classList.remove("hidden");
   $("modal").classList.add("flex");
+};
+
+// ==================== صرف الموظف لنفسه ====================
+window.selfAssign = async (id) => {
+  if (myRole === "admin") return toast("استخدم زر الصرف لاختيار الموظف", true);
+  if (!myEmployeeId) return toast("لم يتم ربط حسابك بسجل موظف بعد", true);
+
+  const asset = assets.find(a => a.id === id);
+  if (!asset || asset.status !== "available") {
+    return toast("هذا الجهاز لم يعد متاحاً للصرف", true);
+  }
+  if (!confirm(`تأكيد صرف جهاز ${asset.device_name} إلى عُهدتك؟`)) return;
+
+  const { data, error } = await db.from("assets")
+    .update({ status: "assigned", assigned_to: myEmployeeId })
+    .eq("id", id)
+    .eq("status", "available")
+    .select("id");
+
+  if (error) return toast("فشل صرف الجهاز: " + error.message, true);
+  if (!data?.length) return toast("الجهاز لم يعد متاحاً للصرف", true);
+  toast("تم صرف الجهاز إلى عُهدتك");
+  loadData();
 };
 
 $("modal-cancel").onclick = () => {
