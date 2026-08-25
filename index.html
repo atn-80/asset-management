@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>نظام إدارة عُهد وتقنيات IT — أمانة منطقة حائل</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body class="bg-slate-50 text-slate-800" style="font-family:'Tajawal',sans-serif">
+
+<div id="toast" class="fixed top-4 left-4 z-50"></div>
+
+<div id="login-screen" class="min-h-screen flex items-center justify-center bg-header px-4">
+  <form id="login-form" class="card w-full max-w-sm text-center">
+    <img src="hail-logo.png" alt="شعار الأمانة" class="h-14 mx-auto mb-3">
+    <h1 class="font-bold text-lg mb-1">نظام إدارة عُهد IT</h1>
+    <p class="text-xs text-slate-500 mb-5">أمانة منطقة حائل</p>
+    <input id="login-email" type="email" required placeholder="البريد الإلكتروني" class="inp w-full mb-3">
+    <input id="login-pass" type="password" required placeholder="كلمة المرور" class="inp w-full mb-4">
+    <button class="btn-green w-full">تسجيل الدخول</button>
+  </form>
+</div>
+
+<div id="app-screen" class="hidden">
+
+  <header class="bg-header text-white">
+    <div class="relative max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3 shrink-0">
+        <img src="hail-logo.png" alt="شعار الأمانة" class="h-10">
+        <div class="hidden sm:block">
+          <h1 class="font-bold text-sm">نظام إدارة عُهد IT</h1>
+          <p class="text-[11px] text-white/70">أمانة منطقة حائل</p>
+        </div>
+      </div>
+      <nav class="absolute inset-x-0 flex justify-center gap-2 flex-wrap px-4 pointer-events-none">
+  <button class="tab-btn active pointer-events-auto" data-tab="dashboard">الرئيسية</button>
+  <button class="tab-btn pointer-events-auto" data-tab="assets">إدارة العُهد</button>
+  <button id="nav-employees" class="tab-btn pointer-events-auto" data-tab="employees">إدارة الموظفين</button>
+  <button class="tab-btn pointer-events-auto" data-tab="maintenance">إصلاح العُهد</button>
+</nav>
+      <button id="logout-btn" class="text-xs text-white/70 hover:text-white shrink-0">خروج</button>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 py-6 space-y-6">
+
+    <section id="tab-dashboard">
+      <div class="grid grid-cols-2 md:grid-cols-5 gap-4">
+        <div class="card text-center"><p class="text-xs text-slate-500">إجمالي العُهد</p><p id="s-total" class="text-2xl font-black">0</p></div>
+        <div class="card text-center"><p class="text-xs text-slate-500">متاحة</p><p id="s-available" class="text-2xl font-black text-green">0</p></div>
+        <div class="card text-center"><p class="text-xs text-slate-500">مصروفة</p><p id="s-assigned" class="text-2xl font-black text-teal">0</p></div>
+        <div class="card text-center"><p class="text-xs text-slate-500">قيد الصيانة</p><p id="s-maintenance" class="text-2xl font-black text-amber">0</p></div>
+        <div class="card text-center"><p class="text-xs text-slate-500">الموظفين</p><p id="s-employees" class="text-2xl font-black">0</p></div>
+      </div>
+    </section>
+
+    <section id="tab-assets" class="hidden space-y-6">
+      <form id="asset-form" class="card grid grid-cols-1 md:grid-cols-5 gap-3">
+        <input id="a-name" required placeholder="اسم الجهاز" class="inp">
+        <input id="a-brand" required placeholder="الماركة" class="inp">
+        <input id="a-serial" required placeholder="الرقم التسلسلي" class="inp">
+        <select id="a-cat" required class="inp">
+          <option value="">الفئة</option>
+          <option>Server</option><option>Switch</option><option>Router</option>
+          <option>Firewall</option><option>PC</option><option>Laptop</option>
+          <option>Printer</option><option>UPS</option><option>Other</option>
+        </select>
+        <button class="btn-green">إضافة</button>
+      </form>
+      <div class="card">
+        <table class="w-full text-sm">
+          <thead><tr class="text-right text-slate-500 border-b">
+            <th class="py-2">الجهاز</th><th>الماركة</th><th>الرقم التسلسلي</th>
+            <th>الفئة</th><th>الحالة</th><th>الموظف</th><th>إجراء</th>
+          </tr></thead>
+          <tbody id="assets-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section id="tab-employees" class="hidden space-y-6">
+      <form id="emp-form" class="card grid grid-cols-1 md:grid-cols-4 gap-3">
+        <input id="e-name" required placeholder="الاسم الثلاثي" class="inp">
+        <input id="e-job" required placeholder="المسمى الوظيفي" class="inp">
+        <input id="e-num" required placeholder="الرقم الوظيفي" class="inp">
+        <button class="btn-teal">إضافة موظف</button>
+      </form>
+      <div id="emp-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3"></div>
+    </section>
+
+    <section id="tab-maintenance" class="hidden space-y-6">
+      <form id="maint-form" class="card grid grid-cols-1 md:grid-cols-4 gap-3">
+        <select id="m-asset" required class="inp"></select>
+        <input id="m-desc" required placeholder="وصف العطل" class="inp md:col-span-2">
+        <button class="btn-amber">تقديم طلب إصلاح</button>
+      </form>
+      <div class="card">
+        <table class="w-full text-sm">
+          <thead><tr class="text-right text-slate-500 border-b">
+            <th class="py-2">الجهاز</th><th>الرقم التسلسلي</th><th>وصف العطل</th>
+            <th>الحالة</th><th>التاريخ</th><th>إجراء</th>
+          </tr></thead>
+          <tbody id="maint-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="modal" class="fixed inset-0 bg-black/50 hidden items-center justify-center z-40">
+    <div class="card w-80 max-w-[90vw]">
+      <h3 class="font-bold mb-3">صرف العُهدة</h3>
+      <p id="modal-asset" class="text-sm mb-3 text-slate-600"></p>
+      <select id="modal-emp" class="inp mb-3"></select>
+      <button id="modal-confirm" class="btn-green w-full">تأكيد</button>
+      <button id="modal-cancel" class="w-full text-sm text-slate-500 mt-2">إلغاء</button>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="app.js"></script>
+</body>
+</html>

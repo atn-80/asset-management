@@ -1,0 +1,35 @@
+body{font-size:16px}
+.bg-header{background:linear-gradient(90deg,#0c3f28,#00933a)}
+.text-green{color:#00933a}
+.text-teal{color:#297579}
+.text-amber{color:#b45309}
+
+.tab-btn{padding:.5rem 1.1rem;border-radius:.6rem;font-size:.95rem;font-weight:700;color:rgba(255,255,255,.75);background:transparent;transition:.15s}
+.tab-btn:hover{background:rgba(255,255,255,.1);color:#fff}
+.tab-btn.active{background:rgba(255,255,255,.15);color:#fff}
+
+.card{background:#fff;border:1px solid #e2e8f0;border-radius:1rem;padding:1.25rem}
+
+.inp{border:1.5px solid #cbd5e1;border-radius:.6rem;padding:.6rem .9rem;font-size:.95rem;font-weight:600;color:#0f172a;outline:none}
+.inp:focus{border-color:#00933a;box-shadow:0 0 0 3px rgba(0,147,58,.15)}
+
+.btn-green,.btn-teal,.btn-amber{color:#fff;font-weight:700;font-size:.95rem;border:none;border-radius:.6rem;padding:.65rem 1.1rem;cursor:pointer;transition:.15s}
+.btn-green{background:#00933a} .btn-green:hover{background:#007530}
+.btn-teal{background:#349397} .btn-teal:hover{background:#297579}
+.btn-amber{background:#b45309} .btn-amber:hover{background:#92400e}
+
+.badge{font-size:.7rem;font-weight:700;padding:.2rem .6rem;border-radius:999px}
+.badge-available{background:rgba(0,147,58,.1);color:#00933a}
+.badge-assigned{background:rgba(52,147,151,.12);color:#297579}
+.badge-maintenance{background:rgba(180,83,9,.12);color:#b45309}
+
+.link-btn{font-size:.75rem;font-weight:700;padding:.3rem .6rem;border-radius:.4rem;cursor:pointer;border:none}
+.link-green{background:rgba(0,147,58,.1);color:#00933a}
+.link-red{background:rgba(220,38,38,.1);color:#dc2626}
+
+.toast-box{background:#fff;border-right:4px solid #00933a;border-radius:.6rem;padding:.7rem 1rem;font-size:.8rem;box-shadow:0 8px 20px rgba(0,0,0,.15);margin-bottom:.5rem}
+.toast-box.error{border-right-color:#dc2626}
+
+table{font-size:.95rem}
+table tbody tr{border-bottom:1px solid #e2e8f0}
+table tbody tr:hover{background:#f0f9f4}
